@@ -11,6 +11,9 @@
           <label class="label">Пароль</label>
           <input class="input" v-model="password" type="password" placeholder="Введите пароль" required />
         </div>
+        <div class="vue-to-server">
+          <button @click="sendToUnity">Send to Unity</button>
+      </div>
         <button class="btn" type="submit">Войти</button>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
@@ -20,6 +23,7 @@
 
 
 <script>
+import { io } from 'socket.io-client';
 export default {
   name: 'Login',
   data() {
@@ -28,6 +32,10 @@ export default {
       password: '',
       error: ''
     };
+  },
+  created() {
+    this.socket = io('http://localhost:3000');
+    this.socket.on('connect', () => console.log('Vue connected to server'));
   },
   methods: {
     async login() {
@@ -48,8 +56,24 @@ export default {
       } catch (e) {
         this.error = 'Не удалось подключиться к серверу';
       }
-    }
+    },
+    sendToUnity() {
+    const payload = {
+      type: 'command',
+      action: 'SpawnObject',
+      data: { x: 0, y: 1, z: 2 }
+    };
+
+    fetch('http://localhost:3000/to-unity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(res => res.json())
+        .then(r => console.log('Sent to Unity:', r))
+        .catch(err => console.error('Error sending to Unity', err));
+
   }
+}
 }
 </script>
 
